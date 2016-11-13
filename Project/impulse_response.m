@@ -1,7 +1,7 @@
 %load/read signal data
 load Data/snap135L %y1
 load Data/snap135R%y2
-[test_sound, fs] = audioread('PanamaWeddingUma.wav');
+[test_sound, fs] = audioread('Misc_Sounds/PanamaWeddingUma.wav');
 
 %initialize variables
 soundL = y1;
@@ -25,10 +25,13 @@ end
 
 %write signals to a two-channel wav file
 stereo_sound = [stereoL, stereoR];
-audiowrite('stereo_test_135.wav', stereo_sound, fs);
+% audiowrite('stereo_test_135.wav', stereo_sound, fs);
 % info = audioinfo('stereo_test.wav')
 % stereo_test_sound = [test_soundL, test_soundR];
 % audiowrite('stereo_real.wav', stereo_test_sound, fs);
+
+fft_sig = abs(fftshift(fft(test_sound(:,1))));
+plot(fft_sig,'m')
 
 % plot(stereoL,'b')
 % hold on
