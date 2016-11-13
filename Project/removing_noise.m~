@@ -1,6 +1,6 @@
 %load/read signal data
-load Data/snap270L %y1
-load Data/snap270R%y2
+load Data/snap0L %y1
+load Data/snap0R%y2
 % [test_sound, fs] = audioread('PanamaWeddingUma.wav');
 
 %initialize variables
@@ -13,7 +13,7 @@ soundR = y2;
 %line up start of impulses (for 0 and 180, or calibration)
 [max_soundL, indexL] = max(soundL);
 [max_soundR, indexR] = max(soundR);
-diff = indexL - indexR
+diff = in
 time_before_index = 500; %so we don't miss any values
 length_of_sound = 7000; %so they're equal length
 
@@ -44,10 +44,10 @@ end
 
 %write signals to a two-channel wav file
 stereo_sound = [stereoL, stereoR];
-% audiowrite('stereo_test0.wav', stereo_sound, fs);
+audiowrite('stereo_test0.wav', stereo_sound, fs);
 
-% figure
-% plot(soundR,'r')
-% hold on
-% plot(soundL,'b')
+figure
+plot(soundR,'r')
+hold on
+plot(soundL,'b')
 
