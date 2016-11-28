@@ -7,13 +7,14 @@ load Data/snap270R%y2
 signal_period = 1400000:1600000; %grab arbitrary sound bite
 test_soundL = test_sound(signal_period,1);
 test_soundR = test_sound(signal_period,2);
-soundL = y1;
-soundR = y2;
+impulseL = y1;
+impulseR = y2;
 
 %line up start of impulses (for 0 and 180, or calibration)
-[max_soundL, indexL] = max(soundL);
-[max_soundR, indexR] = max(soundR);
-diff = indexL - indexR
+[max_soundL, indexL] = max(impulseL);
+[max_soundR, indexR] = max(impulseR);
+% diff = indexL - indexR
+% diff = max_soundR - max_soundL
 time_before_index = 500; %so we don't miss any values
 length_of_sound = 7000; %so they're equal length
 
@@ -26,8 +27,8 @@ else % covers indexR =< indexL conditions
 end
 
 %trim signal to isolate impulses
-soundR = soundR(start_index:start_index + length_of_sound);
-soundL = soundL(start_index:start_index + length_of_sound);
+soundR = impulseR(start_index:start_index + length_of_sound);
+soundL = impulseL(start_index:start_index + length_of_sound);
 
 %convolute input signal with impulse responses
 convL = conv(test_soundL, soundL);
@@ -41,6 +42,8 @@ else
     stereoR = convR;
     stereoL = convL(1:length(convR));
 end
+
+diff = mean(abs(stereoR)) - mean(abs(stereoL))
 
 %write signals to a two-channel wav file
 stereo_sound = [stereoL, stereoR];
