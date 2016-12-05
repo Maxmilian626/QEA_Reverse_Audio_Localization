@@ -3,5 +3,5 @@ record(stereo_mic);
 pause(2);
 stop(stereo_mic);
 y1 = getaudiodata(stereo_mic);
-audiowrite('uma_45.wav', y1, 44100)
+audiowrite('gwyn2_340.wav', y1, 44100)
 plot(y1);
