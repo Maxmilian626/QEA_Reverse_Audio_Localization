@@ -4,7 +4,7 @@ angle = [0 20 40 60 80 100 120 140 160 180 200 220 240 260 280 300 320];
 % time_diff = [-2 17 33 22 -1 -24 -86 -29];
 amp_diff = [.0736 .0638 .303 .3661 .3685 .225 .3723 .4723 .3273 .2381 .0068 .301 .1881 .3621 .2581 .3774 .3516];
 time_diff = [2 14 14 80 21 0 600 282 755 11 -2 -1156 -18 -55 -757 -21 -16];
-step_size = 45; %step between sample angles
+data_step_size = 20; %step between sample angles
 
 %create impulse matrix
 %     [y1, fs] = audioread('gwyn2_0.wav');
@@ -33,15 +33,15 @@ step_size = 45; %step between sample angles
 % desired_soundR = desired_soundL; %no discernible difference between channel 1 and 2
 % desired_soundR = desired_sound(:,2);
 % desired_angle  = 20;
-f = 'walking_loop.wav';
-step = 30;
+f = 'walking_loop_5.wav';
+loop_step = 5;
 
-interval_num = ceil(360/step); %break into this many chunks, ceil to be conservative
-interval_length = length(desired_sound)/interval_num; %length of each interval
-stereo_adjusted_sound = [0, 0]; %initialize empty 2 column matric
+interval_num = ceil(360/loop_step + 1); %break into this many chunks, ceil to be conservative
+interval_length = floor(length(desired_sound)/interval_num) - 100; %length of each interval, floor to be conservative
+stereo_adjusted_sound = [0, 0]; %initialize empty 2 column matrix
 
-for desired_angle = 1:step:360
-    current_step = ceil(desired_angle/step);
+for desired_angle = 1:loop_step:360
+    current_step = ceil(desired_angle/loop_step);
     start = current_step*interval_length - interval_length + 1;
     stop = current_step*interval_length;
     desired_soundL = desired_sound(start:stop,2);
@@ -61,18 +61,18 @@ for desired_angle = 1:step:360
     %know how close it is to the closest angle) and creates a 
     %corresponding closest_sample vector which we'll manipulate
     for i = 1:length(angle)
-        if abs(angle(i) - desired_angle) < ceil(step_size/2)
+        if abs(angle(i) - desired_angle) < ceil(data_step_size/2)
             closest_angle_diff = abs(angle(i) - desired_angle);
             closest_angle_index = i;
             closest_impulse = impulse_matrix(:,i*2-1:i*2);
-        elseif abs(angle(i) - desired_angle) <= step_size
+        elseif abs(angle(i) - desired_angle) <= data_step_size
              next_closest_angle_index = i;
         end
     end
 
     %find slopes for the interval the angle is on
-    amp_interval_slope = (amp_diff(closest_angle_index) - amp_diff(next_closest_angle_index))/step_size;
-    time_interval_slope = (time_diff(closest_angle_index) - time_diff(next_closest_angle_index))/step_size;
+    amp_interval_slope = (amp_diff(closest_angle_index) - amp_diff(next_closest_angle_index))/data_step_size;
+    time_interval_slope = (time_diff(closest_angle_index) - time_diff(next_closest_angle_index))/data_step_size;
 
     %multiply by angle diff to get right proportion -- how much of it
     %is the lower angle sample, how much is the upper angle sample
@@ -80,8 +80,8 @@ for desired_angle = 1:step:360
     time_shift = round(time_interval_slope * closest_angle_diff);
 
     %get indices of max amp for the L and R microphones
-    soundL = closest_impulse(:,1);
-    soundR = closest_impulse(:,2);
+    soundL = closest_impulse(:,2);
+    soundR = closest_impulse(:,1);
     [max_soundL, indexL] = max(soundL);
     [max_soundR, indexR] = max(soundR);
 
@@ -91,13 +91,13 @@ for desired_angle = 1:step:360
     if ear == 0 %if R, - slope should make R happen less ahead of L
         sound_amp_adjustedR = soundR * (1 + amp_shift);
         sound_amp_adjustedL = soundL;
-        time_before_indexR = time_before - time_shift;
-        time_after_indexR = time_after - time_shift; 
+        time_before_indexR = time_before + time_shift;
+        time_after_indexR = time_after + time_shift; 
     else %if L, - slope should make R happen more ahead of L
         sound_amp_adjustedR = soundR;
         sound_amp_adjustedL = soundL * (1 + amp_shift);
-        time_before_indexR = time_before + time_shift;
-        time_after_indexR = time_after + time_shift;   
+        time_before_indexR = time_before - time_shift;
+        time_after_indexR = time_after - time_shift;   
     end
     time_before_indexL = time_before;
     time_after_indexL = time_after;
@@ -107,8 +107,8 @@ for desired_angle = 1:step:360
     sound_adjustedR = sound_amp_adjustedR(indexR - time_before_indexR:indexR + time_after_indexR);
 
     %convolve desired sound and manipulated impulse response
-    conv_adjusted_soundL = conv(desired_soundL, sound_adjustedL);
-    conv_adjusted_soundR = conv(desired_soundR, sound_adjustedR);
+    conv_adjusted_soundL = conv(desired_soundL, sound_adjustedL,'valid');
+    conv_adjusted_soundR = conv(desired_soundR, sound_adjustedR,'valid');
 
     %trim longer signal to length of shorter signal
     if length(conv_adjusted_soundL) < length(conv_adjusted_soundR)
@@ -123,13 +123,10 @@ for desired_angle = 1:step:360
 %     plot(desired_soundR,'r')
 %     plot(stereoR,'b')
 
+%     stereoR = zeros(length(stereoR),1);
     stereo_adjusted_sound = [stereo_adjusted_sound; [stereoL, stereoR]];
 
 end
 
     audiowrite(f, (stereo_adjusted_sound), fs);
-
-
-
-
 
